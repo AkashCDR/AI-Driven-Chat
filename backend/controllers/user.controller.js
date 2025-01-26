@@ -45,8 +45,12 @@ if(!errors.isEmpty()){
 }
 
 try {
+
+  console.log("login controller called")
   
 const {email,password}=req.body;
+
+console.log(`in the login controller we got email is ${email} and password is ${password}`)
 
 const user=await userModel.findOne({email}).select('+password');
 
