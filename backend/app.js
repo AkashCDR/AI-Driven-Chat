@@ -3,7 +3,8 @@ import express from "express"
 import cors from "cors"
 import connect from "./db/db.js"
 import morgan from "morgan";
-import userRouter from "./routes/user.route.js"
+import userRoutes from "./routes/user.route.js"
+import projectRoutes from "./routes/project.route.js"
 
 connect();
 
@@ -15,7 +16,8 @@ app.use(express.json());
 app.use(express.urlencoded({extended:true}))
 app.use(cookieParser());
 
-app.use('/users',userRouter)
+app.use('/users',userRoutes);
+app.use('/projects',projectRoutes)
 
 
 app.get("/",()=>{
