@@ -45,3 +45,64 @@ export const createProject=async (req,res)=>{
         res.status(400).send(err.message);
     }
 }
+
+
+
+export const getAllProject=async (req,res)=>{
+    try {
+
+        console.log("in getAllProject controller email is ",req.user.email)
+        
+      const loggedInUser=await userModel.findOne({email:req.user.email});
+
+      const allUserProjects=await projectService.getAllProjectByUserid({userId:loggedInUser._id});
+
+      res.status(200).json({
+        projects:allUserProjects
+      })
+
+    } catch (error) {
+        console.log("error coming in getAllProject controller which is ",error)
+        res.status(400).json({
+            error:error.message
+        })
+    }
+}
+
+
+export const addUserToProject=async (req,res)=>{
+    const errors=validationResult(req);
+
+    if(!errors.isEmpty()){
+        res.status(400).json({
+            errors:errors.array()
+        })
+    }
+
+    try {
+        const {projectId,users}=req.body;
+
+        if(!projectId){
+            res.status(400).json({
+                message:'please give project Id'
+            })
+        }
+
+        const loggedInUser=await userModel.findOne({email:req.user.email});
+
+        console.log("in addUserToProject controller loggedInUser is ",loggedInUser)
+
+        const project=await projectService.addUsersToProject({projectId,users,userId:loggedInUser._id})
+
+        return res.status(200).json({
+            project
+        })
+
+
+
+    } catch (error) {
+        res.status(400).json({
+            error:error.message
+        })
+    }
+}

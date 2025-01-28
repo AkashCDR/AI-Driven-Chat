@@ -8,7 +8,7 @@ const projectSchema=new mongoose.Schema({
         trim:true,
         minLength:[4,'minimum length of project name should be atlease 4']
     },
-    user:[
+    users:[
         {
             type:mongoose.Schema.Types.ObjectId,
             ref:'user'
