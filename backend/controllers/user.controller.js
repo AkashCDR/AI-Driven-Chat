@@ -1,6 +1,6 @@
 import { ExpressValidator, validationResult } from "express-validator"
 import userModel from "../models/user.model.js"
-import { createUser } from "../services/user.service.js";
+import { createUser, getAllUsers } from "../services/user.service.js";
 import redisClient from "../services/redis.service.js";
 
 export const createUserController=async (req,res)=>{
@@ -112,5 +112,29 @@ export const logoutController = async (req, res) => {
   } catch (err) {
       console.log(err);
       res.status(400).send(err.message);
+  }
+}
+
+
+
+export const getAllUsersController=async (req,res)=>{
+  try {
+    const loggedInUser=await userModel.findOne({
+      email:req.user.email
+    })
+
+    // console.log("i am with in the getAllUserController component and here the loggedInUser is ",loggedInUser)
+
+    const allUsers=await getAllUsers({userId:loggedInUser._id});
+
+    return res.status(200).json({
+      users:allUsers
+    })
+
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      error:error.message
+    })
   }
 }

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { body } from "express-validator";
-import { createUserController, loginController, logoutController, profileController } from "../controllers/user.controller.js";
+import { createUserController, getAllUsersController, loginController, logoutController, profileController } from "../controllers/user.controller.js";
 import { authUser } from "../middleware/auth.middleware.js";
 
 const router=Router()
@@ -12,5 +12,7 @@ router.post('/login',body('email').isEmail().withMessage('please give a valid em
 router.get('/profile',authUser,profileController)
 
 router.get('/logout',authUser,logoutController)
+
+router.get('/all',authUser,getAllUsersController)
 
 export default router;

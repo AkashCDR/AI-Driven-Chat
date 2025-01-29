@@ -106,3 +106,32 @@ export const addUserToProject=async (req,res)=>{
         })
     }
 }
+
+
+export const getProjectById=async (req,res)=>{
+    const {projectId}=req.params;
+
+    try {
+
+        
+ 
+        if(!projectId){
+            res.status(401).json({
+                error:'project Id is required in params'
+            })
+        }
+
+      
+
+        const project=await projectService.getProjectById({projectId:projectId})
+
+        return res.status(200).json({
+            project
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(401).json({
+            error:error.message
+        })
+    }
+}
