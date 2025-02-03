@@ -70,6 +70,8 @@ if(!isMatched){
 
 const token=await user.generateJWT();
 
+console.log(`in login controller user is ${user}`)
+
 return res.status(201).json({
   user,token
 })
