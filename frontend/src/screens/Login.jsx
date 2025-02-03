@@ -8,18 +8,29 @@ const navigate=useNavigate();
 const {setUser}=useContext(UserContext)
 const [email,setEmail]=useState('');
 const [password,setPassword]=useState('');
-    const submitHandler=(e)=>{
-        e.preventDefault();
-        axios.post('/users/login',{email,password}).then((res)=>{
-          console.log(res)
-          localStorage.setItem('token',res.data.token)
-          setUser(res.data.token);
-          navigate('/');
-        }).catch((err)=>{
-            console.log("in the login submit handler error is coming which is ",err)
-        })
-        
-    }
+async function submitHandler(e) {
+
+    e.preventDefault()
+
+    console.log('submit handler is running')
+
+    axios.post('/users/login', {
+        email,
+        password
+    }).then((res) => {
+        console.log(res.data)
+
+        localStorage.setItem('token', res.data.token)
+
+        console.log(res.data.user)
+
+        setUser(res.data.user)
+
+        navigate('/')
+    }).catch((err) => {
+        console.log(err.response.data)
+    })
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">

@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom';
 import axios from "../config/axios"
+import { initializeSocket, receiveMessage, sendMessage } from '../config/socket';
+import { UserContext } from '../context/user.context';
 
 const Project = () => {
 
@@ -11,23 +13,76 @@ const Project = () => {
    const [project,setProject]=useState(location.state.project);
    const [selectedUserId,setSelectedUserId]=useState(new Set());
    const [users,setUsers]=useState([])
+   const [messages,setMessages]=useState([]);
+   const {user}=useContext(UserContext)
+   const messageBox = React.createRef()
 
-   function send(){
+
+
+//    useEffect(()=>{
+
+//     initializeSocket();
+
+
+//      receiveMessage('project-message',(data)=>{
+
+//         console.log(`receiving message ${data}`)
+
+//         setMessages(prevMessage => [...prevMessage,data])
+//      })
+
+//      axios.get('/users/all').then((res)=>{
+//       setUsers(res.data.users)
+//      }).catch((err)=>console.log(err));
+
+
+//      axios.get(`/projects/get-project/${location.state.project._id}`).then((res)=>{
+//       setProject(res.data.project);
+//      })
+
+     
+
+
+//    },[])
+
+
+
+useEffect(() => {
+    initializeSocket(project._id); 
+
+    receiveMessage("project-message", (data) => {
+        console.log('receive message called')
+        console.log(`Receiving message:`, data);
+        setMessages((prevMessage) => [...prevMessage, data]);
+    });
+
+    axios.get("/users/all")
+        .then((res) => setUsers(res.data.users))
+        .catch((err) => console.log(err));
+
+    axios.get(`/projects/get-project/${location.state.project._id}`)
+        .then((res) => setProject(res.data.project));
+
+    return () => {
+        console.log("Cleaning up socket...");
+    };
+}, []);
+
+
+
+function send(){
+
+    console.log(`within send function in project.jsx the value of user is ${user}`)
+
+    sendMessage('project-message',{
+        message,
+        sender:user
+    })
+    setMessages((prevMessage)=>{return [...prevMessage,{sender:user,message}]})
+    setMessage('');
     console.log(`${message} message is sent`)
    }
 
-   useEffect(()=>{
-     axios.get('/users/all').then((res)=>{
-      setUsers(res.data.users)
-     }).catch((err)=>console.log(err));
-
-
-     axios.get(`/projects/get-project/${location.state.project._id}`).then((res)=>{
-      setProject(res.data.project);
-     })
-
-
-   },[])
 
 
 
@@ -72,20 +127,18 @@ const Project = () => {
         </header>
         <div className="conversation-area pt-14 pb-10 flex-grow flex flex-col h-full relative">
 
-            {/* <div
+            <div
                 ref={messageBox}
                 className="message-box p-1 flex-grow flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide">
                 {messages.map((msg, index) => (
                     <div key={index} className={`${msg.sender._id === 'ai' ? 'max-w-80' : 'max-w-52'} ${msg.sender._id == user._id.toString() && 'ml-auto'}  message flex flex-col p-2 bg-slate-50 w-fit rounded-md`}>
                         <small className='opacity-65 text-xs'>{msg.sender.email}</small>
                         <div className='text-sm'>
-                            {msg.sender._id === 'ai' ?
-                                WriteAiMessage(msg.message)
-                                : <p>{msg.message}</p>}
+                            <p>{msg.message}</p>
                         </div>
                     </div>
                 ))}
-            </div> */}
+            </div>
 
             <div className="inputField w-full flex absolute bottom-0">
                 <input

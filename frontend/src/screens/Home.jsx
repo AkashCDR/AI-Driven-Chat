@@ -31,6 +31,8 @@ useEffect(() => {
       console.log(err)
   })
 
+  console.log(`user is ${user}`)
+
 }, [])
 
   return (
