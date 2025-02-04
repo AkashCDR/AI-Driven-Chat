@@ -5,6 +5,7 @@ import connect from "./db/db.js"
 import morgan from "morgan";
 import userRoutes from "./routes/user.route.js"
 import projectRoutes from "./routes/project.route.js"
+import aiRoutes from "./routes/ai.route.js"
 
 connect();
 
@@ -18,6 +19,7 @@ app.use(cookieParser());
 
 app.use('/users',userRoutes);
 app.use('/projects',projectRoutes)
+app.use('/ai',aiRoutes)
 
 
 app.get("/",()=>{
