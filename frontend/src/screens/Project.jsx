@@ -1,8 +1,30 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState,useRef } from 'react'
 import { useLocation } from 'react-router-dom';
 import axios from "../config/axios"
 import { initializeSocket, receiveMessage, sendMessage } from '../config/socket';
 import { UserContext } from '../context/user.context';
+import Markdown from 'markdown-to-jsx'
+import hljs from 'highlight.js';
+
+
+
+
+function SyntaxHighlightedCode(props) {
+    const ref = useRef(null)
+
+    React.useEffect(() => {
+        if (ref.current && props.className?.includes('lang-') && window.hljs) {
+            window.hljs.highlightElement(ref.current)
+
+            // hljs won't reprocess the element unless this attribute is removed
+            ref.current.removeAttribute('data-highlighted')
+        }
+    }, [ props.className, props.children ])
+
+    return <code {...props} ref={ref} />
+}
+
+
 
 const Project = () => {
 
@@ -15,7 +37,14 @@ const Project = () => {
    const [users,setUsers]=useState([])
    const [messages,setMessages]=useState([]);
    const {user}=useContext(UserContext)
-   const messageBox = React.createRef()
+   const messageBox = React.createRef();
+   const [currentFile,setCurrentFile]=useState(null);
+   const [fileTree,setFileTree]=useState({})
+   const [openFiles,setOpenFiles]=useState([]);
+
+
+
+   
 
 
 
@@ -50,11 +79,101 @@ const Project = () => {
 useEffect(() => {
     initializeSocket(project._id); 
 
+    // receiveMessage("project-message", (data) => {
+    //     console.log('receive message called')
+    //     console.log(`Receiving message:`, data);
+
+
+    //     if(data.sender._id == 'ai'){
+    //         const message=JSON.parse(data.message)
+    //         console.log("receiving the ai message which is ",message)
+    //         if(message.fileTree){
+    //          setFileTree(message.fileTree || {})
+    //         }
+    //     }
+
+    //     setMessages((prevMessage) => [...prevMessage, data]);
+    // });
+
+
+
+
+    // receiveMessage("project-message", (data) => {
+    //     console.log('receive message called');
+    //     console.log(`Receiving message:`, data);
+    
+    //     try {
+    //         let message = typeof data.message === "string" ? JSON.parse(data.message) : data.message;
+            
+    //         console.log("Receiving the AI message which is ", message);
+    
+    //         if (data.sender._id === 'ai' && message.fileTree) {
+    //             setFileTree(message.fileTree || {});
+    //         }
+    
+    //         setMessages((prevMessage) => [...prevMessage, data]);
+    //     } catch (error) {
+    //         console.error("Error parsing AI message:", error, data.message);
+    //     }
+    // });
+    
+
+
+
+
+
+
+
     receiveMessage("project-message", (data) => {
-        console.log('receive message called')
+        console.log('receive message called');
         console.log(`Receiving message:`, data);
-        setMessages((prevMessage) => [...prevMessage, data]);
+    
+        try {
+            let message;
+            
+            // If message is already an object, use it directly
+            if (typeof data.message === "object") {
+                message = data.message;
+            } else if (typeof data.message === "string") {
+                // Trim unnecessary whitespace and parse
+                const trimmedMessage = data.message.trim();
+                
+                // Check if the message starts and ends with `{` and `}`
+                if (trimmedMessage.startsWith("{") && trimmedMessage.endsWith("}")) {
+                    message = JSON.parse(trimmedMessage);
+                } else {
+                    console.error("Message format is incorrect:", trimmedMessage);
+                    return;
+                }
+            } else {
+                console.error("Unknown message format:", data.message);
+                return;
+            }
+    
+            console.log("Receiving the AI message which is ", message);
+    
+            if (data.sender._id === 'ai' && message.fileTree) {
+                setFileTree(message.fileTree || {});
+            }
+    
+            setMessages((prevMessage) => [...prevMessage, data]);
+        } catch (error) {
+            console.error("Error parsing AI message:", error, data.message);
+        }
     });
+    
+
+
+
+
+
+
+
+
+
+
+
+
 
     axios.get("/users/all")
         .then((res) => setUsers(res.data.users))
@@ -83,6 +202,48 @@ function send(){
     console.log(`${message} message is sent`)
    }
 
+
+//    function WriteAiMessage(message) {
+//     let messageObject;
+
+//     try {
+//         messageObject = JSON.parse(message);
+//     } catch (error) {
+//         console.error("Invalid JSON:", error);
+//         return <div className='text-red-500 p-2'>Invalid message format</div>;
+//     }
+
+//     console.log("in writeAiMessage messageObject is ",messageObject)
+
+//     return (
+//         <div className='overflow-auto bg-slate-950 text-white rounded-sm p-2'>
+//             <Markdown options={{ overrides: { code: SyntaxHighlightedCode } }}>
+//                 {messageObject.text}
+//             </Markdown>
+//         </div>
+//     );
+// }
+
+function WriteAiMessage(message) {
+
+    const messageObject = JSON.parse(message)
+
+    console.log("in writeAiMessage messageObject is ",messageObject)
+
+    return (
+        <div
+            className='overflow-auto bg-slate-950 text-white rounded-sm p-2'
+        >
+            <Markdown
+                children={messageObject.text}
+                options={{
+                    overrides: {
+                        code: SyntaxHighlightedCode,
+                    },
+                }}
+            />
+        </div>)
+}
 
 
 
@@ -134,7 +295,10 @@ function send(){
                     <div key={index} className={`${msg.sender._id === 'ai' ? 'max-w-80' : 'max-w-52'} ${msg.sender._id == user._id.toString() && 'ml-auto'}  message flex flex-col p-2 bg-slate-50 w-fit rounded-md`}>
                         <small className='opacity-65 text-xs'>{msg.sender.email}</small>
                         <div className='text-sm'>
-                            <p>{msg.message}</p>
+                        {msg.sender._id === 'ai' ?
+                                        WriteAiMessage(msg.message)
+                                        : <p>{msg.message}</p>}
+                            
                         </div>
                     </div>
                 ))}
@@ -181,7 +345,27 @@ function send(){
         </div>
     </section>
 
-    {/* <section className="right  bg-red-50 flex-grow h-full flex">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <section className="right  bg-red-50 flex-grow h-full flex">
 
         <div className="explorer h-full max-w-64 min-w-52 bg-slate-200">
             <div className="file-tree w-full">
@@ -224,7 +408,7 @@ function send(){
                     }
                 </div>
 
-                <div className="actions flex gap-2">
+                {/* <div className="actions flex gap-2">
                     <button
                         onClick={async () => {
                             await webContainer.mount(fileTree)
@@ -266,7 +450,7 @@ function send(){
                     </button>
 
 
-                </div>
+                </div> */}
             </div>
             <div className="bottom flex flex-grow max-w-full shrink overflow-auto">
                 {
@@ -289,7 +473,7 @@ function send(){
                                             }
                                         }
                                         setFileTree(ft)
-                                        saveFileTree(ft)
+                                        // saveFileTree(ft)
                                     }}
                                     dangerouslySetInnerHTML={{ __html: hljs.highlight('javascript', fileTree[ currentFile ].file.contents).value }}
                                     style={{
@@ -306,7 +490,7 @@ function send(){
 
         </div>
 
-        {iframeUrl && webContainer &&
+        {/* {iframeUrl && webContainer &&
             (<div className="flex min-w-96 flex-col h-full">
                 <div className="address-bar">
                     <input type="text"
@@ -315,10 +499,44 @@ function send(){
                 </div>
                 <iframe src={iframeUrl} className="w-full h-full"></iframe>
             </div>)
-        }
+        } */}
 
 
-    </section> */}
+    </section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
