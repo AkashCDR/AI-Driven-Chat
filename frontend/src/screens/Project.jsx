@@ -5,6 +5,7 @@ import { initializeSocket, receiveMessage, sendMessage } from '../config/socket'
 import { UserContext } from '../context/user.context';
 import Markdown from 'markdown-to-jsx'
 import hljs from 'highlight.js';
+import { getWebContainer } from '../config/webContainer';
 
 
 
@@ -41,6 +42,9 @@ const Project = () => {
    const [currentFile,setCurrentFile]=useState(null);
    const [fileTree,setFileTree]=useState({})
    const [openFiles,setOpenFiles]=useState([]);
+   const [webContainer,setWebContainer]=useState(null)
+   const [runProcess,setRunProcess]=useState(null);
+   const [iframeUrl,setIframeUrl]=useState(null)
 
 
 
@@ -78,6 +82,16 @@ const Project = () => {
 
 useEffect(() => {
     initializeSocket(project._id); 
+
+
+    if (!webContainer) {
+        getWebContainer().then(container => {
+            setWebContainer(container)
+            console.log("container started")
+        })
+    }
+
+
 
     // receiveMessage("project-message", (data) => {
     //     console.log('receive message called')
@@ -153,6 +167,7 @@ useEffect(() => {
             console.log("Receiving the AI message which is ", message);
     
             if (data.sender._id === 'ai' && message.fileTree) {
+                webContainer?.mount(message.fileTree)
                 setFileTree(message.fileTree || {});
             }
     
@@ -161,6 +176,141 @@ useEffect(() => {
             console.error("Error parsing AI message:", error, data.message);
         }
     });
+    
+
+
+
+
+
+
+
+
+
+
+
+    // receiveMessage("project-message", (data) => {
+    //     console.log('receive message called');
+    //     console.log(`Receiving message:`, data);
+    
+    //     try {
+    //         let message;
+    
+    //         // Step 1: Ensure `data.message` is a string before parsing
+    //         if (typeof data.message === "object") {
+    //             message = data.message; // Already parsed JSON
+    //         } else if (typeof data.message === "string") {
+    //             const trimmedMessage = data.message.trim();
+    
+    //             // Step 2: Extract the valid JSON part using regex
+    //             const jsonMatch = trimmedMessage.match(/\{[\s\S]*\}/);
+    //             if (jsonMatch) {
+    //                 message = JSON.parse(jsonMatch[0]); // Extract JSON and parse it
+    //             } else {
+    //                 console.error("Invalid JSON format:", trimmedMessage);
+    //                 return;
+    //             }
+    //         } else {
+    //             console.error("Unknown message format:", data.message);
+    //             return;
+    //         }
+    
+    //         console.log("Receiving the AI message which is ", message);
+    
+    //         if (data.sender._id === 'ai' && message.fileTree) {
+    //             setFileTree(message.fileTree || {});
+    //         }
+    
+    //         setMessages((prevMessage) => [...prevMessage, data]);
+    //     } catch (error) {
+    //         console.error("Error parsing AI message:", error, data.message);
+    //     }
+    // });
+    
+
+
+
+
+
+
+
+
+
+
+
+    // receiveMessage("project-message", (data) => {
+    //     console.log('receive message called');
+    //     console.log(`Receiving message:`, data);
+    
+    //     try {
+    //         let message;
+    
+    //         if (typeof data.message === "object") {
+    //             // ✅ Already an object, use directly
+    //             message = data.message;
+    //         } else if (typeof data.message === "string") {
+    //             const trimmedMessage = data.message.trim();
+    
+    //             // ✅ Extract only the JSON part using regex
+    //             const jsonMatch = trimmedMessage.match(/\{[\s\S]*\}/);
+    //             if (jsonMatch) {
+    //                 message = JSON.parse(jsonMatch[0]); // Extract JSON and parse it
+    //             } else {
+    //                 console.error("Invalid JSON format:", trimmedMessage);
+    //                 return;
+    //             }
+    //         } else {
+    //             console.error("Unknown message format:", data.message);
+    //             return;
+    //         }
+    
+    //         console.log("Receiving the AI message which is ", message);
+    
+    //         if (data.sender._id === 'ai' && message.fileTree) {
+    //             setFileTree(message.fileTree || {});
+    //         }
+    
+    //         setMessages((prevMessage) => [...prevMessage, data]);
+    //     } catch (error) {
+    //         console.error("Error parsing AI message:", error.message, data.message);
+    //     }
+    // });
+
+
+
+
+
+
+
+
+    // receiveMessage('project-message', data => {
+
+    //     console.log(data)
+        
+    //     if (data.sender._id == 'ai') {
+
+
+    //         const message = JSON.parse(data.message)
+
+    //         console.log(message)
+
+    //         webContainer?.mount(message.fileTree)
+
+    //         if (message.fileTree) {
+    //             setFileTree(message.fileTree || {})
+    //         }
+    //         setMessages(prevMessages => [ ...prevMessages, data ]) // Update messages state
+    //     } else {
+
+
+    //         setMessages(prevMessages => [ ...prevMessages, data ]) // Update messages state
+    //     }
+    // })
+
+
+
+
+
+
     
 
 
@@ -408,7 +558,20 @@ function WriteAiMessage(message) {
                     }
                 </div>
 
-                {/* <div className="actions flex gap-2">
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <div className="actions flex gap-2">
                     <button
                         onClick={async () => {
                             await webContainer.mount(fileTree)
@@ -450,7 +613,22 @@ function WriteAiMessage(message) {
                     </button>
 
 
-                </div> */}
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             </div>
             <div className="bottom flex flex-grow max-w-full shrink overflow-auto">
                 {
@@ -490,7 +668,18 @@ function WriteAiMessage(message) {
 
         </div>
 
-        {/* {iframeUrl && webContainer &&
+
+
+
+
+
+
+
+
+
+
+
+        {iframeUrl && webContainer &&
             (<div className="flex min-w-96 flex-col h-full">
                 <div className="address-bar">
                     <input type="text"
@@ -499,7 +688,23 @@ function WriteAiMessage(message) {
                 </div>
                 <iframe src={iframeUrl} className="w-full h-full"></iframe>
             </div>)
-        } */}
+        } 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     </section>
